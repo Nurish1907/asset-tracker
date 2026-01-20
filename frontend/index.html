@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Asset Tracker</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <header class="header">
+    <h1>Asset Tracker</h1>
+    <p class="muted">Scan → pick dept → assign → save</p>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <div class="row">
+        <label class="label" for="assetNo">Asset No</label>
+        <div class="row-inline">
+          <input id="assetNo" class="input" placeholder="Scan barcode or type..." autocomplete="off" />
+          <button id="btnScan" class="btn primary" type="button">Scan</button>
+        </div>
+      </div>
+
+      <div id="scanArea" class="scanArea hidden">
+        <video id="video" playsinline></video>
+        <div class="scanActions">
+          <button id="btnStopScan" class="btn" type="button">Stop</button>
+        </div>
+        <p id="scanMsg" class="muted small"></p>
+      </div>
+
+      <div class="row">
+        <div class="label">Dept</div>
+        <div id="deptGrid" class="grid"></div>
+        <div id="deptSelected" class="pill muted">No dept selected</div>
+      </div>
+
+      <div class="row">
+        <label class="label" for="assignedTo">Assigned To</label>
+        <input id="assignedTo" class="input" placeholder="Name / Staff ID" autocomplete="off" />
+      </div>
+
+      <div class="row">
+        <div class="label">Assigned Date</div>
+        <div id="assignedAt" class="pill"></div>
+      </div>
+
+      <div class="row-inline">
+        <button id="btnSave" class="btn success" type="button">Save</button>
+        <button id="btnClear" class="btn" type="button">Clear</button>
+      </div>
+
+      <p id="status" class="muted small"></p>
+    </section>
+
+    <section class="card">
+      <div class="row-inline space-between">
+        <h2 class="h2">Recent</h2>
+        <button id="btnRefresh" class="btn" type="button">Refresh</button>
+      </div>
+      <div id="list" class="list"></div>
+    </section>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>
