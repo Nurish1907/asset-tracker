@@ -1,16 +1,9 @@
 {
-  "name": "",
+  "name": "asset-tracker-frontend",
   "version": "1.0.0",
-  "description": "",
-  "main": "src/functions/*.js",
+  "private": true,
   "scripts": {
-    "start": "func start",
-    "test": "echo \"No tests yet...\""
-  },
-  "dependencies": {
-    "@azure/functions": "^4.0.0"
-  },
-  "devDependencies": {
-    "azure-functions-core-tools": "^4.x"
+    "build": "echo \"No build step (static HTML)\"",
+    "build:azure": "echo \"No build step (static HTML)\""
   }
 }
