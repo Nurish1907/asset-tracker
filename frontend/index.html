@@ -1,6 +1,8 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
+
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Asset Tracker</title>
@@ -62,6 +64,16 @@
       <div id="list" class="list"></div>
     </section>
   </main>
+<div id="scanModal" class="modal hidden">
+  <div class="modalCard">
+    <div class="modalHeader">
+      <div class="modalTitle">Scan barcode</div>
+      <button id="closeScanBtn" class="btn">Close</button>
+    </div>
+    <video id="scanVideo" playsinline></video>
+    <div class="modalHint">Point camera at barcode…</div>
+  </div>
+</div>
 
   <script src="./app.js"></script>
 </body>

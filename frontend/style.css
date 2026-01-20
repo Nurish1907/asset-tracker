@@ -41,3 +41,29 @@ body { margin: 0; background: #0b0f17; color: #e8eefc; }
 .scanArea { margin-top: 12px; }
 video { width: 100%; border-radius: 12px; border: 1px solid #26324a; background: black; }
 .scanActions { margin-top: 10px; display: flex; justify-content: flex-end; }
+
+.modal.hidden { display: none; }
+.modal {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.6);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999;
+}
+.modalCard {
+  width: min(92vw, 520px);
+  background: rgba(20,24,32,.92);
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 16px;
+  padding: 14px;
+}
+.modalHeader {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 10px;
+}
+.modalTitle { font-weight: 700; }
+#scanVideo {
+  width: 100%;
+  border-radius: 12px;
+  background: #000;
+}
+.modalHint { opacity: .8; margin-top: 8px; font-size: 14px; }
