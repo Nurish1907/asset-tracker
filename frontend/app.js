@@ -1,4 +1,5 @@
 // frontend/app.js (matches your current index.html IDs)
+document.getElementById("status").textContent = "JS LOADED ✅ v1";
 
 const API_BASE = "https://asset-tracker-api-nurrish.azurewebsites.net/api";
 
