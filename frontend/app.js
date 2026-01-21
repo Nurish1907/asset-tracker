@@ -1,320 +1,246 @@
-/* frontend/app.js
-   Asset Tracker - frontend logic
-*/
+// frontend/app.js (matches your current index.html IDs)
 
-(() => {
-  // ====== CONFIG ======
-  // If your API is on the same Static Web App (recommended), keep it like this:
-  const API_BASE = ""; // same origin
-  const API_ASSETS = `${API_BASE}/api/assets`;
+const API_BASE = "https://asset-tracker-api-nurrish.azurewebsites.net/api";
 
-  const MAX_RECENT = 10;
+const DEPTS = [
+  { code: "AR", label: "AR" },
+  { code: "RSS", label: "RSS" },
+  { code: "Inventory", label: "Inventory" },
+  { code: "Casepick", label: "Casepick" },
+  { code: "Replenish", label: "Replenish" },
+  { code: "Dry Inbound", label: "Dry Inbound" },
+  { code: "Fresh Inbound", label: "Fresh Inbound" },
+  { code: "Fresh / Frozen", label: "Fresh / Frozen" },
+];
 
-  // ====== DOM ======
-  const elAssetNo = document.getElementById("assetNo");
-  const elAssignedTo = document.getElementById("assignedTo");
-  const elAssignedAt = document.getElementById("assignedAt");
-  const elStatus = document.getElementById("status");
+const el = (id) => document.getElementById(id);
 
-  const elSaveBtn = document.getElementById("saveBtn");
-  const elClearBtn = document.getElementById("clearBtn");
-  const elRefreshBtn = document.getElementById("refreshBtn");
-  const elScanBtn = document.getElementById("scanBtn");
+let selectedDept = "";
+let zxingReader = null;
 
-  const elRecentList = document.getElementById("recentList");
-  const elDeptSelectedLabel = document.getElementById("deptSelectedLabel");
+// ---------- UI helpers ----------
+function setStatus(msg) {
+  const s = el("status");
+  if (s) s.textContent = msg || "";
+}
 
-  // Scan modal (needs to exist in HTML)
-  const elScanModal = document.getElementById("scanModal");
-  const elScanVideo = document.getElementById("scanVideo");
-  const elCloseScanBtn = document.getElementById("closeScanBtn");
+function setAssignedAtNow() {
+  const a = el("assignedAt");
+  if (a) a.textContent = new Date().toLocaleString();
+}
 
-  // Dept buttons: <button class="dept-btn" data-dept="AR">AR</button>
-  const deptButtons = Array.from(document.querySelectorAll(".dept-btn"));
+function renderDeptButtons() {
+  const grid = el("deptGrid");
+  if (!grid) return;
 
-  // ====== STATE ======
-  let selectedDept = "";
-  let zxingReader = null;
+  grid.innerHTML = "";
+  DEPTS.forEach((d) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "btn deptBtn";
+    b.textContent = d.label;
 
-  // ====== HELPERS ======
-  function setStatus(msg, type = "info") {
-    if (!elStatus) return;
-    elStatus.textContent = msg || "";
-    elStatus.dataset.type = type; // optional styling hook
-  }
+    b.addEventListener("click", () => {
+      selectedDept = d.code;
+      [...grid.querySelectorAll("button")].forEach((x) =>
+        x.classList.remove("selected")
+      );
+      b.classList.add("selected");
 
-  function nowLocalString() {
-    // Format like: 20/01/2026, 09:38:07 (matches your screenshots)
-    return new Date().toLocaleString(undefined, {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
+      const pill = el("deptSelected");
+      if (pill) {
+        pill.textContent = `Selected: ${d.label}`;
+        pill.classList.remove("muted");
+      }
     });
-  }
 
-  function setAssignedNow() {
-    if (elAssignedAt) elAssignedAt.value = nowLocalString();
-  }
+    grid.appendChild(b);
+  });
+}
 
-  function sanitize(str) {
-    return String(str ?? "").trim();
+function showNoDept() {
+  const pill = el("deptSelected");
+  if (pill) {
+    pill.textContent = "No dept selected";
+    pill.classList.add("muted");
   }
+}
 
-  function escapeHtml(s) {
-    return String(s ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
+// ---------- API ----------
+async function refreshList() {
+  const list = el("list");
+  if (list) list.innerHTML = `<p class="muted small">Loading…</p>`;
 
-  function openScanModal() {
-    if (!elScanModal) return;
-    elScanModal.classList.remove("hidden");
-  }
+  try {
+    const res = await fetch(`${API_BASE}/assets?max=20`);
+    const data = await res.json();
 
-  function closeScanModal() {
-    if (!elScanModal) return;
-    elScanModal.classList.add("hidden");
-  }
+    if (!res.ok || !data.ok) {
+      throw new Error(data.error || `Load failed (${res.status})`);
+    }
 
-  function stopVideoStream(video) {
-    if (!video) return;
-    const stream = video.srcObject;
-    if (stream && stream.getTracks) stream.getTracks().forEach((t) => t.stop());
-    video.srcObject = null;
-  }
+    if (!list) return;
 
-  function setAssetNo(value) {
-    if (elAssetNo) elAssetNo.value = sanitize(value);
-  }
+    const items = data.items || [];
+    if (!items.length) {
+      list.innerHTML = `<p class="muted small">No records yet.</p>`;
+      return;
+    }
 
-  function updateDeptUI() {
-    deptButtons.forEach((btn) => {
-      const d = btn.dataset.dept || "";
-      btn.classList.toggle("selected", d === selectedDept);
+    list.innerHTML = "";
+    items.forEach((x) => {
+      const div = document.createElement("div");
+      div.className = "item";
+      div.innerHTML = `
+        <div><strong>${x.assetNo}</strong> • <span class="muted">${x.dept}</span></div>
+        <div class="muted small">Assigned to: ${x.assignedTo}</div>
+        <div class="muted small">Assigned at: ${new Date(x.assignedAt).toLocaleString()}</div>
+      `;
+      list.appendChild(div);
     });
-    if (elDeptSelectedLabel) {
-      elDeptSelectedLabel.textContent = selectedDept
-        ? `Selected: ${selectedDept}`
-        : "No dept selected";
-    }
-  }
 
-  // ====== API ======
-  async function apiGetRecent() {
-    const url = `${API_ASSETS}?max=${encodeURIComponent(String(MAX_RECENT))}`;
-    const res = await fetch(url, { method: "GET" });
-    let data = null;
-    try {
-      data = await res.json();
-    } catch (_) {}
-    if (!res.ok) {
-      const msg = data?.error || `Failed to load (${res.status})`;
-      throw new Error(msg);
-    }
-    return data;
+    setStatus("");
+  } catch (err) {
+    if (list) list.innerHTML = `<p class="muted small">❌ ${err.message}</p>`;
+    setStatus(`❌ ${err.message}`);
   }
+}
 
-  async function apiSaveAsset(payload) {
-    const res = await fetch(API_ASSETS, {
+async function saveAsset() {
+  const assetNo = (el("assetNo")?.value || "").trim();
+  const assignedTo = (el("assignedTo")?.value || "").trim();
+
+  if (!assetNo) return setStatus("❌ Asset No is required.");
+  if (!selectedDept) return setStatus("❌ Please select a dept.");
+  if (!assignedTo) return setStatus("❌ Please fill Assigned To.");
+
+  const payload = {
+    assetNo,
+    dept: selectedDept,
+    assignedTo,
+    assignedAt: new Date().toISOString(),
+  };
+
+  try {
+    setStatus("Saving…");
+
+    const res = await fetch(`${API_BASE}/assets`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
 
     const data = await res.json().catch(() => ({}));
-    if (!res.ok || data?.ok === false) {
-      throw new Error(data?.error || `Save failed (${res.status})`);
+
+    if (!res.ok || !data.ok) {
+      throw new Error(data.error || `Save failed (${res.status})`);
     }
-    return data;
+
+    setStatus("✅ Saved");
+    await refreshList();
+  } catch (err) {
+    setStatus(`❌ ${err.message}`);
   }
+}
 
-  // ====== RENDER ======
-  function renderRecent(items) {
-    if (!elRecentList) return;
+function clearForm() {
+  const asset = el("assetNo");
+  const who = el("assignedTo");
+  if (asset) asset.value = "";
+  if (who) who.value = "";
 
-    if (!Array.isArray(items) || items.length === 0) {
-      elRecentList.innerHTML = `<div class="muted">No recent records</div>`;
-      return;
-    }
+  selectedDept = "";
+  const grid = el("deptGrid");
+  if (grid) [...grid.querySelectorAll("button")].forEach((x) => x.classList.remove("selected"));
+  showNoDept();
 
-    elRecentList.innerHTML = items
-      .map((it) => {
-        const assetNo = escapeHtml(it.assetNo || it.rowKey || "");
-        const dept = escapeHtml(it.dept || "");
-        const assignedTo = escapeHtml(it.assignedTo || "");
-        const assignedAt = escapeHtml(it.assignedAt || "");
-        return `
-          <div class="recentItem">
-            <div class="recentTop">
-              <div class="recentAsset">${assetNo}</div>
-              <div class="recentDept">${dept}</div>
-            </div>
-            <div class="recentMeta">Assigned to: ${assignedTo}</div>
-            <div class="recentMeta">Assigned at: ${assignedAt}</div>
-          </div>
-        `;
-      })
-      .join("");
-  }
+  setAssignedAtNow();
+  setStatus("");
+}
 
-  // ====== ACTIONS ======
-  async function refreshRecent() {
-    try {
-      setStatus("Loading recent…");
-      const data = await apiGetRecent();
-      renderRecent(data.items || []);
-      setStatus("");
-    } catch (e) {
-      setStatus(`Failed to load: ${e.message}`, "error");
-    }
-  }
+// ---------- Scanner (ZXing-first, works on iPhone Safari) ----------
+function openScanModal() {
+  const m = el("scanModal");
+  if (m) m.classList.remove("hidden");
+}
+function closeScanModal() {
+  const m = el("scanModal");
+  if (m) m.classList.add("hidden");
+}
 
-  async function saveCurrent() {
-    const assetNo = sanitize(elAssetNo?.value);
-    const assignedTo = sanitize(elAssignedTo?.value);
-    const dept = sanitize(selectedDept);
+function stopVideoStream(video) {
+  const stream = video?.srcObject;
+  if (stream && stream.getTracks) stream.getTracks().forEach((t) => t.stop());
+  if (video) video.srcObject = null;
+}
 
-    if (!assetNo) return setStatus("Asset No is required.", "error");
-    if (!dept) return setStatus("Please select a dept.", "error");
-    if (!assignedTo) return setStatus("Assigned To is required.", "error");
+async function startScan() {
+  setStatus("");
 
-    // Use ISO for backend (best practice). Keep local string for display only.
-    const assignedAtISO = new Date().toISOString();
-
-    const payload = { assetNo, dept, assignedTo, assignedAt: assignedAtISO };
-
-    try {
-      setStatus("Saving…");
-      await apiSaveAsset(payload);
-      setStatus("Saved ✅", "success");
-      await refreshRecent();
-    } catch (e) {
-      setStatus(`Save failed: ${e.message}`, "error");
-    }
-  }
-
-  function clearForm() {
-    if (elAssetNo) elAssetNo.value = "";
-    if (elAssignedTo) elAssignedTo.value = "";
-    selectedDept = "";
-    updateDeptUI();
-    setAssignedNow();
-    setStatus("");
-  }
-
-  // ====== SCANNER ======
-  async function startScan() {
-    // MUST be called from user gesture (button click) to allow camera access
-    setStatus("");
-
-    // Try native BarcodeDetector first (works on some Android/Chrome)
-    if ("BarcodeDetector" in window) {
-      try {
-        const formats = [
-          "qr_code",
-          "code_128",
-          "ean_13",
-          "ean_8",
-          "upc_a",
-          "upc_e",
-          "code_39",
-        ];
-        const detector = new BarcodeDetector({ formats });
-
-        openScanModal();
-
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment" },
-          audio: false,
-        });
-
-        elScanVideo.srcObject = stream;
-        await elScanVideo.play();
-
-        const tick = async () => {
-          if (!elScanModal || elScanModal.classList.contains("hidden")) return;
-
-          if (elScanVideo.readyState === elScanVideo.HAVE_ENOUGH_DATA) {
-            const barcodes = await detector.detect(elScanVideo);
-            if (barcodes && barcodes.length) {
-              const value = barcodes[0].rawValue || "";
-              stopVideoStream(elScanVideo);
-              closeScanModal();
-              setAssetNo(value);
-              return;
-            }
-          }
-          requestAnimationFrame(tick);
-        };
-        requestAnimationFrame(tick);
-        return;
-      } catch (e) {
-        // fall back to ZXing
-        console.log("Native BarcodeDetector failed, fallback to ZXing:", e);
-      }
-    }
-
-    // ZXing fallback (works on iPhone Safari)
-    if (!window.ZXing) {
-      setStatus(
-        "Scanner library not loaded. Make sure ZXing script is added in index.html.",
-        "error"
-      );
-      return;
-    }
-
+  // ZXing (best for iPhone Safari)
+  if (window.ZXing) {
     openScanModal();
+    const video = el("scanVideo");
 
-    if (!zxingReader) {
-      zxingReader = new ZXing.BrowserMultiFormatReader();
+    if (!video) {
+      setStatus("❌ scanVideo element missing in HTML.");
+      closeScanModal();
+      return;
     }
 
+    if (!zxingReader) zxingReader = new ZXing.BrowserMultiFormatReader();
+
     try {
-      await zxingReader.decodeFromVideoDevice(null, elScanVideo, (result) => {
+      await zxingReader.decodeFromVideoDevice(null, video, (result) => {
         if (result) {
           const value = result.getText();
           zxingReader.reset();
+          stopVideoStream(video);
           closeScanModal();
-          setAssetNo(value);
+          el("assetNo").value = value;
         }
       });
+      return;
     } catch (e) {
       console.log(e);
-      setStatus("Camera scan failed. Check permission and try again.", "error");
+      setStatus("❌ Camera scan failed. Check permission and try again.");
       closeScanModal();
+      return;
     }
   }
 
-  function stopScan() {
-    try {
-      if (zxingReader) zxingReader.reset();
-    } catch (_) {}
-    stopVideoStream(elScanVideo);
-    closeScanModal();
-  }
+  // Fallback message if ZXing isn't loaded
+  setStatus("❌ Scanner not ready: ZXing library not loaded. Check index.html script order.");
+}
 
-  // ====== WIRE EVENTS ======
-  deptButtons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      selectedDept = btn.dataset.dept || "";
-      updateDeptUI();
-    });
+function stopScan() {
+  const video = el("scanVideo");
+  try {
+    if (zxingReader) zxingReader.reset();
+  } catch (_) {}
+  stopVideoStream(video);
+  closeScanModal();
+}
+
+// ---------- Init ----------
+function init() {
+  renderDeptButtons();
+  setAssignedAtNow();
+  showNoDept();
+  refreshList();
+
+  el("btnSave")?.addEventListener("click", saveAsset);
+  el("btnClear")?.addEventListener("click", clearForm);
+  el("btnRefresh")?.addEventListener("click", refreshList);
+
+  // Scan modal buttons
+  el("btnScan")?.addEventListener("click", startScan);
+  el("closeScanBtn")?.addEventListener("click", stopScan);
+
+  // Optional: close modal if user taps outside the card
+  el("scanModal")?.addEventListener("click", (e) => {
+    if (e.target?.id === "scanModal") stopScan();
   });
+}
 
-  if (elSaveBtn) elSaveBtn.addEventListener("click", saveCurrent);
-  if (elClearBtn) elClearBtn.addEventListener("click", clearForm);
-  if (elRefreshBtn) elRefreshBtn.addEventListener("click", refreshRecent);
-  if (elScanBtn) elScanBtn.addEventListener("click", startScan);
-  if (elCloseScanBtn) elCloseScanBtn.addEventListener("click", stopScan);
-
-  // ====== INIT ======
-  setAssignedNow();
-  updateDeptUI();
-  refreshRecent();
-})();
+document.addEventListener("DOMContentLoaded", init);
