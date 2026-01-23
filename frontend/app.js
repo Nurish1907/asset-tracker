@@ -4,6 +4,7 @@ document.getElementById("status").textContent = "JS LOADED ✅ v1";
 const API_BASE = "https://asset-tracker-api-nurrish.azurewebsites.net/api";
 
 const DEPTS = [
+  { code: "IT Buffer", label: "IT Buffer" },
   { code: "AR", label: "AR" },
   { code: "RSS", label: "RSS" },
   { code: "Inventory", label: "Inventory" },
@@ -12,6 +13,7 @@ const DEPTS = [
   { code: "Dry Inbound", label: "Dry Inbound" },
   { code: "Fresh Inbound", label: "Fresh Inbound" },
   { code: "Fresh / Frozen", label: "Fresh / Frozen" },
+  { code: "RMA", label: "RMA" },
 ];
 
 const el = (id) => document.getElementById(id);
