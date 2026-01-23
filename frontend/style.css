@@ -68,15 +68,3 @@ video { width: 100%; border-radius: 12px; border: 1px solid #26324a; background:
 }
 .modalHint { opacity: .8; margin-top: 8px; font-size: 14px; }
 
-#statusBar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 8px 12px;
-  background: #0c1320;
-  border-top: 1px solid #1a2233;
-  color: #9fb0d0;
-  font-size: 12px;
-  z-index: 1000;
-}
