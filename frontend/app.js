@@ -61,6 +61,7 @@ function renderDeptButtons() {
   });
 }
 
+//added total number dept
 function showNoDept() {
   const pill = el("deptSelected");
   if (pill) {
@@ -68,6 +69,45 @@ function showNoDept() {
     pill.classList.add("muted");
   }
 }
+
+function renderDeptSummary(items) {
+  const box = document.getElementById("deptSummary");
+  if (!box) return;
+
+  const counts = {};
+  (items || []).forEach((a) => {
+    const dept = (a.dept || "").trim() || "Unknown";
+    counts[dept] = (counts[dept] || 0) + 1;
+  });
+
+  const rows = Object.entries(counts)
+    .sort((a, b) => b[1] - a[1]) // highest first
+    .map(([dept, n]) => `
+      <div class="item">
+        <div class="row-inline space-between">
+          <div><strong>${dept}</strong></div>
+          <div class="pill">${n}</div>
+        </div>
+      </div>
+    `)
+    .join("");
+
+  box.innerHTML = rows || `<p class="muted small">No data yet.</p>`;
+}
+
+async function refreshSummary() {
+  try {
+    setStatus("Loading summary…");
+    const res = await fetch(`${API_BASE}/assets?max=500`);
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || "Failed to load");
+    renderDeptSummary(data.items || []);
+    setStatus("");
+  } catch (e) {
+    setStatus(`❌ ${e.message}`);
+  }
+}
+
 
 // ---------- API ----------
 async function refreshList() {
@@ -247,3 +287,7 @@ function init() {
 }
 
 document.addEventListener("DOMContentLoaded", init);
+document.getElementById("btnSummaryRefresh")?.addEventListener("click", refreshSummary);
+
+refreshSummary();
+
