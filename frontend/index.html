@@ -1,13 +1,15 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
-
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Asset Tracker</title>
   <link rel="stylesheet" href="./style.css" />
+
+  <!-- ZXing MUST load before app.js -->
+  <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
 </head>
+
 <body>
   <header class="header">
     <h1>Asset Tracker</h1>
@@ -15,16 +17,6 @@
   </header>
 
   <main class="container">
-    
-<section class="card">
-  <div class="row-inline space-between">
-    <h2 class="h2">Dept Summary</h2>
-    <button id="btnSummaryRefresh" class="btn" type="button">Refresh</button>
-  </div>
-  <div id="deptSummary" class="list"></div>
-</section>
-
-    
     <section class="card">
       <div class="row">
         <label class="label" for="assetNo">Asset No</label>
@@ -32,14 +24,6 @@
           <input id="assetNo" class="input" placeholder="Scan barcode or type..." autocomplete="off" />
           <button id="btnScan" class="btn primary" type="button">Scan</button>
         </div>
-      </div>
-
-      <div id="scanArea" class="scanArea hidden">
-        <video id="video" playsinline></video>
-        <div class="scanActions">
-          <button id="btnStopScan" class="btn" type="button">Stop</button>
-        </div>
-        <p id="scanMsg" class="muted small"></p>
       </div>
 
       <div class="row">
@@ -62,8 +46,14 @@
         <button id="btnSave" class="btn success" type="button">Save</button>
         <button id="btnClear" class="btn" type="button">Clear</button>
       </div>
+    </section>
 
-      
+    <section class="card">
+      <div class="row-inline space-between">
+        <h2 class="h2">Dept Summary</h2>
+        <button id="btnSummaryRefresh" class="btn" type="button">Refresh</button>
+      </div>
+      <div id="deptSummary" class="list"></div>
     </section>
 
     <section class="card">
@@ -74,22 +64,25 @@
       <div id="list" class="list"></div>
     </section>
   </main>
-<div id="scanModal" class="modal hidden">
-  <div class="modalCard">
-    <div class="modalHeader">
-      <div class="modalTitle">Scan barcode</div>
-      <button id="closeScanBtn" class="btn">Close</button>
+
+  <!-- Scan Modal -->
+  <div id="scanModal" class="modal hidden">
+    <div class="modalCard">
+      <div class="modalHeader">
+        <div class="modalTitle">Scan barcode</div>
+        <button id="closeScanBtn" class="btn" type="button">Close</button>
+      </div>
+      <video id="scanVideo" playsinline></video>
+      <div class="modalHint">Point camera at barcode…</div>
     </div>
-    <video id="scanVideo" playsinline></video>
-    <div class="modalHint">Point camera at barcode…</div>
   </div>
-</div>
 
-  <script src="./app.js"></script>
-  
+  <!-- Status pinned at bottom -->
   <footer id="statusBar">
-  <span id="status" class="small"></span>
-</footer>
+    <span id="status" class="small"></span>
+  </footer>
 
+  <!-- app.js MUST be inside body and after HTML -->
+  <script src="./app.js"></script>
 </body>
 </html>
