@@ -107,6 +107,29 @@ async function refreshSummary() {
     setStatus(`❌ ${e.message}`);
   }
 }
+// new refresh edit function
+function renderDeptSummary(items) {
+  const box = document.getElementById("deptSummary");
+  if (!box) return;
+
+  const counts = {};
+  items.forEach(a => {
+    const d = a.dept || "Unknown";
+    counts[d] = (counts[d] || 0) + 1;
+  });
+
+  box.innerHTML = Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .map(([dept, n]) => `
+      <div class="item">
+        <div class="row-inline space-between">
+          <strong>${dept}</strong>
+          <span class="pill">${n}</span>
+        </div>
+      </div>
+    `)
+    .join("") || `<p class="muted small">No data</p>`;
+}
 
 
 // ---------- API ----------
@@ -125,6 +148,8 @@ async function refreshList() {
     if (!list) return;
 
     const items = data.items || [];
+    renderDeptSummary(items);
+
     if (!items.length) {
       list.innerHTML = `<p class="muted small">No records yet.</p>`;
       return;
