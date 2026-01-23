@@ -1,3 +1,5 @@
+document.getElementById("status").textContent = "JS RUNNING ✅";
+
 // frontend/app.js (matches your current index.html IDs)
 document.getElementById("status").textContent = "JS LOADED ✅ v1";
 
