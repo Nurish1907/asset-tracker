@@ -59,6 +59,7 @@ function renderDeptButtons() {
     optionsBox.className = "deptOptions hidden";
 
     headerBtn.addEventListener("click", () => {
+      
       // close other groups (accordion)
       grid.querySelectorAll(".deptOptions").forEach((box) => {
         if (box !== optionsBox) box.classList.add("hidden");
@@ -73,9 +74,11 @@ function renderDeptButtons() {
       b.textContent = opt;
 
       b.addEventListener("click", () => {
+        
         // Save as "Group - Option"
         selectedDept = `${group} - ${opt}`;
 
+        
         // clear old selection UI
         grid.querySelectorAll(".deptBtn").forEach((x) => x.classList.remove("selected"));
         b.classList.add("selected");
@@ -234,6 +237,8 @@ async function refreshList() {
     if (!list) return;
 
     const items = data.items || [];
+    const recentItems = items.slice(0, 5);
+
     renderDeptPie(items);
 
     if (!items.length) {
@@ -242,7 +247,7 @@ async function refreshList() {
     }
 
     list.innerHTML = "";
-    items.forEach((x) => {
+    recentItems.forEach((x) => {
       const div = document.createElement("div");
       div.className = "item";
       div.innerHTML = `
