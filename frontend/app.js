@@ -5,18 +5,21 @@ document.getElementById("status").textContent = "JS LOADED ✅ v1";
 
 const API_BASE = "https://asset-tracker-api-nurrish.azurewebsites.net/api";
 
-const DEPTS = [
-  { code: "IT Buffer", label: "IT Buffer" },
-  { code: "AR", label: "AR" },
-  { code: "RSS", label: "RSS" },
-  { code: "Inventory", label: "Inventory" },
-  { code: "Casepick", label: "Casepick" },
-  { code: "Replenish", label: "Replenish" },
-  { code: "Dry Inbound", label: "Dry Inbound" },
-  { code: "Fresh Inbound", label: "Fresh Inbound" },
-  { code: "Fresh / Frozen", label: "Fresh / Frozen" },
-  { code: "RMA", label: "RMA" },
+const DEPT_GROUPS = [
+  {
+    group: "IT",
+    options: ["Buffer", "Faulty", "Vendor"],
+  },
+  {
+    group: "Dry",
+    options: ["Sortation", "RSS", "AR", "Casepick", "Inventory", "Decant", "Replen", "Inbound"],
+  },
+  {
+    group: "Fresh",
+    options: ["Fresh / Frozen", "Inbound", "Others"],
+  },
 ];
+
 
 const el = (id) => document.getElementById(id);
 
@@ -39,29 +42,60 @@ function renderDeptButtons() {
   if (!grid) return;
 
   grid.innerHTML = "";
-  DEPTS.forEach((d) => {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.className = "btn deptBtn";
-    b.textContent = d.label;
 
-    b.addEventListener("click", () => {
-      selectedDept = d.code;
-      [...grid.querySelectorAll("button")].forEach((x) =>
-        x.classList.remove("selected")
-      );
-      b.classList.add("selected");
+  DEPT_GROUPS.forEach(({ group, options }) => {
+    const wrap = document.createElement("div");
+    wrap.className = "deptGroup";
 
-      const pill = el("deptSelected");
-      if (pill) {
-        pill.textContent = `Selected: ${d.label}`;
-        pill.classList.remove("muted");
-      }
+    const headerBtn = document.createElement("button");
+    headerBtn.type = "button";
+    headerBtn.className = "btn deptGroupBtn";
+    headerBtn.textContent = group;
+
+    const optionsBox = document.createElement("div");
+    optionsBox.className = "deptOptions hidden";
+
+    headerBtn.addEventListener("click", () => {
+      // close other groups (accordion)
+      grid.querySelectorAll(".deptOptions").forEach((box) => {
+        if (box !== optionsBox) box.classList.add("hidden");
+      });
+      optionsBox.classList.toggle("hidden");
     });
 
-    grid.appendChild(b);
+    options.forEach((opt) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "btn deptBtn";
+      b.textContent = opt;
+
+      b.addEventListener("click", () => {
+        // Save as "Group - Option"
+        selectedDept = `${group} - ${opt}`;
+
+        // clear old selection UI
+        grid.querySelectorAll(".deptBtn").forEach((x) => x.classList.remove("selected"));
+        b.classList.add("selected");
+
+        const pill = el("deptSelected");
+        if (pill) {
+          pill.textContent = `Selected: ${selectedDept}`;
+          pill.classList.remove("muted");
+        }
+
+        // close after choosing
+        optionsBox.classList.add("hidden");
+      });
+
+      optionsBox.appendChild(b);
+    });
+
+    wrap.appendChild(headerBtn);
+    wrap.appendChild(optionsBox);
+    grid.appendChild(wrap);
   });
 }
+
 
 //added total number dept
 function showNoDept() {
