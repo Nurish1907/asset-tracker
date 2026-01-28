@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Asset Tracker</title>
   <link rel="stylesheet" href="./style.css" />
+  
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
   <!-- ZXing MUST load before app.js -->
   <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
@@ -53,7 +55,11 @@
         <h2 class="h2">Dept Summary</h2>
         <button id="btnSummaryRefresh" class="btn" type="button">Refresh</button>
       </div>
-      <div id="deptSummary" class="list"></div>
+     <div class="chartWrap">
+  <canvas id="deptPie"></canvas>
+</div>
+<p id="deptPieNote" class="muted small"></p>
+
     </section>
 
     <section class="card">
