@@ -1,5 +1,8 @@
 document.getElementById("status").textContent = "JS RUNNING ✅";
 
+let deptPieChart = null;
+
+
 // frontend/app.js (matches your current index.html IDs)
 document.getElementById("status").textContent = "JS LOADED ✅ v1";
 
@@ -167,6 +170,53 @@ function renderDeptSummary(items) {
     .join("") || `<p class="muted small">No data</p>`;
 }
 
+function renderDeptPie(items) {
+  const canvas = document.getElementById("deptPie");
+  const note = document.getElementById("deptPieNote");
+  if (!canvas) return;
+
+  // Count per dept
+  const counts = {};
+  (items || []).forEach((a) => {
+    const dept = (a.dept || "Unknown").trim() || "Unknown";
+    counts[dept] = (counts[dept] || 0) + 1;
+  });
+
+  const labels = Object.keys(counts);
+  const data = Object.values(counts);
+
+  if (note) {
+    const total = data.reduce((s, n) => s + n, 0);
+    note.textContent = total ? `Total assets: ${total}` : "No data yet.";
+  }
+
+  // Chart.js must be loaded
+  if (!window.Chart) {
+    if (note) note.textContent = "Chart library not loaded (Chart.js).";
+    return;
+  }
+
+  // Destroy old chart (important when refreshing)
+  if (deptPieChart) {
+    deptPieChart.destroy();
+    deptPieChart = null;
+  }
+
+  deptPieChart = new Chart(canvas, {
+    type: "pie",
+    data: {
+      labels,
+      datasets: [{ data }],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: "bottom" },
+      },
+    },
+  });
+}
+
 
 // ---------- API ----------
 async function refreshList() {
@@ -184,7 +234,7 @@ async function refreshList() {
     if (!list) return;
 
     const items = data.items || [];
-    renderDeptSummary(items);
+    renderDeptPie(items);
 
     if (!items.length) {
       list.innerHTML = `<p class="muted small">No records yet.</p>`;
