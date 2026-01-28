@@ -114,3 +114,10 @@ body {
   justify-content: space-between;
 }
 
+  .chartWrap {
+  padding: 10px;
+  background: #0c1320;
+  border: 1px solid #26324a;
+  border-radius: 12px;
+}
+
