@@ -11,11 +11,11 @@ const DEPT_GROUPS = [
     options: ["Buffer", "Faulty", "Vendor"],
   },
   {
-    group: "Dry",
+    group: "DRY",
     options: ["Sortation", "RSS", "AR", "Casepick", "Inventory", "Decant", "Replen", "Inbound"],
   },
   {
-    group: "Fresh",
+    group: "FRESH",
     options: ["Fresh / Frozen", "Inbound", "Others"],
   },
 ];
