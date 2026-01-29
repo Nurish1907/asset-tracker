@@ -1,6 +1,6 @@
 document.getElementById("status").textContent = "JS RUNNING ✅";
 
-let deptPieChart = null;
+let deptChart = null;
 
 
 // frontend/app.js (matches your current index.html IDs)
@@ -99,6 +99,53 @@ function renderDeptButtons() {
     wrap.appendChild(headerBtn);
     wrap.appendChild(optionsBox);
     grid.appendChild(wrap);
+  });
+}
+
+//deptChartbar function
+
+function renderDeptBarChart(items) {
+  const canvas = document.getElementById("deptChart");
+  const note = document.getElementById("deptChartNote");
+  if (!canvas) return;
+
+  const counts = {};
+  (items || []).forEach((a) => {
+    const dept = (a.dept || "Unknown").trim() || "Unknown";
+    counts[dept] = (counts[dept] || 0) + 1;
+  });
+
+  // Sort desc so bars are readable
+  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  const labels = entries.map(e => e[0]);
+  const data = entries.map(e => e[1]);
+  const total = data.reduce((s, n) => s + n, 0);
+
+  if (note) note.textContent = total ? `Total assets: ${total}` : "No data yet.";
+
+  if (!window.Chart) {
+    if (note) note.textContent = "Chart library not loaded (Chart.js).";
+    return;
+  }
+
+  if (deptChart) {
+    deptChart.destroy();
+    deptChart = null;
+  }
+
+  deptChart = new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{ label: "Assets", data }],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { precision: 0 } },
+      },
+    },
   });
 }
 
@@ -235,8 +282,11 @@ async function refreshList() {
     }
 
     if (!list) return;
-
+    
     const items = data.items || [];
+    renderDeptBarChart(items);
+
+    
     const recentItems = items.slice(0, 5);
 
     renderDeptPie(items);
