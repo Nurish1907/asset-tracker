@@ -274,7 +274,8 @@ async function refreshList() {
   if (list) list.innerHTML = `<p class="muted small">Loading…</p>`;
 
   try {
-    const res = await fetch(`${API_BASE}/assets?max=20`);
+    const res = await fetch(`${API_BASE}/api/assets?max=2000`);
+
     const data = await res.json();
 
     if (!res.ok || !data.ok) {
