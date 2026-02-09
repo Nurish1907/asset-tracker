@@ -103,7 +103,7 @@ app.http("assets", {
 
       for await (const e of iter) {
         items.push(e);
-        if (items.length >= 200) break;
+        if (items.length >= 2000) break;
       }
 
       items.sort((a, b) =>
@@ -125,3 +125,4 @@ app.http("assets", {
     }
   },
 });
+
