@@ -6,7 +6,9 @@ let deptChart = null;
 // frontend/app.js (matches your current index.html IDs)
 document.getElementById("status").textContent = "JS LOADED ✅ v1";
 
-const API_BASE = "https://asset-tracker-api-nurrish.azurewebsites.net/api";
+const API_BASE = "https://asset-tracker-api-nurrish.azurewebsites.net";
+const ASSETS_ENDPOINT = `${API_BASE}/api/assets`;
+
 
 const DEPT_GROUPS = [
   {
